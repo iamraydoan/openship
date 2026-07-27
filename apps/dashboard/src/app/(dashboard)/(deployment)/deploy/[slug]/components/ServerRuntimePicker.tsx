@@ -25,10 +25,13 @@ import type { RuntimeMode } from "@/context/deployment/types";
 // single-digit-% CPU + ~30-80MB RAM, negligible vs. the isolation upside.
 const TWO_GB = 2 * 1024 * 1024 * 1024;
 
-const ServerRuntimePicker: React.FC = () => {
+const ServerRuntimePicker: React.FC<{ enabled?: boolean }> = ({ enabled = true }) => {
   const { config, updateConfig } = useDeployment();
   const { t } = useI18n();
-  const { stats } = useMonitorStream(config.serverId ?? null, true);
+  // Only stream the server's live stats while actually visible — the picker is
+  // now always mounted (inside the accordion) so the panel can animate its
+  // height, but we don't want a background stats stream when it's collapsed.
+  const { stats } = useMonitorStream(config.serverId ?? null, enabled);
 
   const runtimeOptions: Array<{
     value: RuntimeMode;
@@ -90,7 +93,7 @@ const ServerRuntimePicker: React.FC = () => {
         </p>
       </div>
 
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 items-stretch">
         {runtimeOptions.map((option) => {
           const isSelected = selected === option.value;
           const isRecommended = option.value === recommendedMode;
@@ -102,7 +105,7 @@ const ServerRuntimePicker: React.FC = () => {
                 hasUserSelectedRef.current = true;
                 updateConfig({ runtimeMode: option.value });
               }}
-              className={`w-full rounded-xl border p-4 text-start transition-all ${
+              className={`h-full w-full rounded-xl border p-4 text-start transition-all ${
                 isSelected
                   ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                   : "border-border/50 bg-card hover:border-primary/30 hover:bg-primary/[0.02]"

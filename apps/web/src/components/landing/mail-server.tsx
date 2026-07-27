@@ -17,9 +17,10 @@ export function MailServer() {
               <span className="ms-title-soft">unlimited domains.</span>
             </h2>
             <p className="ms-body">
-              Send password resets, receipts, magic links, marketing - from any domain
-              you own. No Sendgrid bill. No DNS rabbit hole. One click and the records,
-              certificates, and authentication chain are in place.
+              A real mail server on your own box - not a send-only API. Outbound relays through a
+              trusted provider (Amazon SES or any SMTP) so mail lands with a warmed, high-reputation
+              IP, while every mailbox, message, and byte stays on your server. One click sets up the
+              domains, certificates, and SPF/DKIM/DMARC chain.
             </p>
 
             <ul className="ms-points">

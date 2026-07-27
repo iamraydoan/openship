@@ -98,6 +98,14 @@ dropdown next to their name — pick a new role and it applies right away. Owner
 remove yourself.
 </Callout>
 
+<Callout title="Granting server access is high-blast-radius" type="warn">
+Giving a member access to a **server** (when inviting, or by editing their access on the Team tab) is a
+bigger deal than a role change: on that server they can reach every deployment and its **data**, the apps
+running on it, injected **secrets/env vars**, a live **terminal**, and any **GitHub tokens** used for its
+deploys. Because of that, Openship shows a **confirmation** that spells out exactly what the new access
+exposes before it takes effect. Grant server access only to people you trust with everything on that box.
+</Callout>
+
 For the full rules on how permissions and per-resource access are enforced, see
 [Permissions & roles](/docs/security/permissions).
 

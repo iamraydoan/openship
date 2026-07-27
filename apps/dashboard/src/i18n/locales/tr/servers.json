@@ -120,10 +120,11 @@
   "detail": {
     "tabs": {
       "overview": "Genel Bakış",
+      "migrations": "Geçişler",
       "components": "Bileşenler",
       "github": "Git Doğrulama",
       "security": "Güvenlik",
-      "ports": "Portlar",
+      "ports": "Port yönlendirme",
       "terminal": "Terminal"
     },
     "healthy": "Sağlıklı",

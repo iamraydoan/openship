@@ -246,8 +246,12 @@ export class SshExecutor implements CommandExecutor {
 
         stream.on("close", (code: number) => {
           finish(() => {
-            if (code !== 0) reject(new Error(stderr.trim() || `Exit code ${code}`));
-            else resolve(stdout.trim());
+            if (code !== 0) {
+              // Include stdout too — certbot & friends write the real error there
+              // while stderr only has boilerplate, so stderr-only hid the cause.
+              const detail = [stderr.trim(), stdout.trim()].filter(Boolean).join("\n");
+              reject(new Error(detail || `Exit code ${code}`));
+            } else resolve(stdout.trim());
           });
         });
       });
@@ -404,6 +408,72 @@ export class SshExecutor implements CommandExecutor {
             onClose,
             kill: () => { try { stream.close(); } catch {} },
           });
+        });
+      });
+    })();
+  }
+
+  /**
+   * Pipe `body` into a remote command's stdin over a raw ssh2 channel, half-
+   * closing stdin at EOF. The streaming inverse of rawExec: used to stream a
+   * `docker save` tar straight into `docker load` on another host without
+   * staging the (multi-GB) image to a temp file. Bounded stderr tail for
+   * diagnostics; registered for transport-drop abort like _exec/_streamExec.
+   */
+  execWithInput(command: string, body: Readable): Promise<{ code: number; stderr: string; stdout: string }> {
+    return (async () => {
+      const client = await this.connect();
+      return new Promise<{ code: number; stderr: string; stdout: string }>((resolve, reject) => {
+        let settled = false;
+        const abort = (err: Error) => finish(() => reject(err));
+        const finish = (act: () => void) => {
+          if (settled) return;
+          settled = true;
+          this.inflight.delete(abort);
+          act();
+        };
+        this.inflight.add(abort);
+
+        client.exec(command, (err, stream) => {
+          if (err) return finish(() => reject(err));
+
+          let stderr = "";
+          stream.stderr.on("data", (d: Buffer) => {
+            stderr += d.toString();
+            if (stderr.length > 16 * 1024) stderr = stderr.slice(-16 * 1024);
+          });
+          // Capture stdout (docker load prints "Loaded image( ID)?: <ref>", which
+          // the caller needs to retag) AND keep the channel flowing so it doesn't
+          // stall on an unread buffer.
+          let stdout = "";
+          stream.on("data", (d: Buffer) => {
+            stdout += d.toString();
+            if (stdout.length > 16 * 1024) stdout = stdout.slice(-16 * 1024);
+          });
+
+          let exitCode: number | null = null;
+          stream.on("exit", (code: number | null) => {
+            exitCode = code;
+          });
+          stream.on("close", (code: number | null) => {
+            finish(() => {
+              const final = typeof code === "number" ? code : exitCode;
+              if (final == null) {
+                reject(
+                  new Error(
+                    "remote channel closed without an exit status — the SSH connection was terminated mid-command",
+                  ),
+                );
+              } else {
+                resolve({ code: final, stderr: stderr.trim(), stdout: stdout.trim() });
+              }
+            });
+          });
+
+          // body → channel stdin; end() sends EOF so the reader exits.
+          body.on("error", (e) => finish(() => { try { stream.close(); } catch {} reject(e); }));
+          stream.on("error", (e: Error) => finish(() => reject(e)));
+          body.pipe(stream);
         });
       });
     })();

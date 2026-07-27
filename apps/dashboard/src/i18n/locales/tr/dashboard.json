@@ -63,7 +63,7 @@
     "emails": "E-postalar",
     "jobs": "Görevler",
     "settings": "Ayarlar",
-    "billing": "Faturalandırma",
+    "billing": "Faturalandırma ve Kullanım",
     "sections": {
       "main": "Ana Menü",
       "settings": "Ayarlar",
@@ -94,6 +94,7 @@
       "popular": "Popüler uygulamalar",
       "alsoDeploy": "Ayrıca dağıtabilirsiniz",
       "browseAll": "Tüm uygulamalara göz atın",
+      "moreApps": "+{count} tane daha",
       "catalogTitle": "Uygulama kur",
       "catalogDescription": "Tek tıkla yönetilen servisler. Kurmak için bir uygulama seçin.",
       "catalogSearchPlaceholder": "Uygulama ara…",
@@ -167,7 +168,7 @@
       "description": "Hesap, ekip ve platform ayarları."
     },
     "billing": {
-      "title": "Faturalandırma",
+      "title": "Faturalandırma ve Kullanım",
       "description": "Abonelik, kullanım ve ödeme yöntemlerinizi yönetin."
     }
   },
@@ -195,7 +196,7 @@
       "description": "Özel alan adları"
     },
     "billing": {
-      "title": "Faturalandırma",
+      "title": "Faturalandırma ve Kullanım",
       "description": "Kullanım ve planlar"
     }
   }

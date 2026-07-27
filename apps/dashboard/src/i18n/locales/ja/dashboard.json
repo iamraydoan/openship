@@ -25,6 +25,7 @@
     "projectCountOne": "{count}件のプロジェクト",
     "projectCountOther": "{count}件のプロジェクト",
     "viewAllProjects": "{count}件のプロジェクトをすべて表示 →",
+    "viewAllApps": "{count}件のアプリをすべて表示 →",
     "greetingName": "{greeting}、{name}さん",
     "importGit": "Gitからインポート",
     "importGitDesc": "リポジトリから",
@@ -59,7 +60,7 @@
     "servers": "サーバー",
     "emails": "メール",
     "settings": "設定",
-    "billing": "請求",
+    "billing": "請求と使用状況",
     "sections": {
       "main": "メイン",
       "settings": "設定",
@@ -78,6 +79,9 @@
     "preferences": "環境設定"
   },
   "pages": {
+    "apps": {
+      "moreApps": "他 {count} 件"
+    },
     "projects": {
       "title": "プロジェクト",
       "description": "アプリケーションを簡単にデプロイして管理できます",
@@ -130,7 +134,7 @@
       "description": "アカウント、チーム、プラットフォームの設定。"
     },
     "billing": {
-      "title": "請求",
+      "title": "請求と使用状況",
       "description": "サブスクリプション、使用量、支払い方法を管理します。"
     }
   },
@@ -158,7 +162,7 @@
       "description": "カスタムドメイン"
     },
     "billing": {
-      "title": "請求",
+      "title": "請求と使用状況",
       "description": "使用量とプラン"
     }
   }

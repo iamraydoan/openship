@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { BlurIp } from "@/components/BlurIp";
 import {
   Cloud,
   Loader2,
@@ -429,7 +430,7 @@ function ServerForm({
             <option value="">{t.settings.migrate.server.pickServer}</option>
             {servers.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.name || s.sshHost} ({s.sshUser}@{s.sshHost})
+                {s.name || <BlurIp>{s.sshHost}</BlurIp>} ({s.sshUser}@<BlurIp>{s.sshHost}</BlurIp>)
               </option>
             ))}
           </select>

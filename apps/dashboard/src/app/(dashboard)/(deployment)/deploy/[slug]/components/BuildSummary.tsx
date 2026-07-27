@@ -163,7 +163,11 @@ const BuildSummary: React.FC = () => {
                   {isServices ? t.deploy.buildSummary.stack : t.deploy.buildSummary.runtime}
                 </p>
                 <p className="text-sm font-medium text-foreground truncate">
-                  {stackDef?.name || "Docker"}
+                  {/* A compose project has no single top-level stack (framework
+                      is "unknown" by design — the real stack is per-service), so
+                      don't surface STACKS['unknown'].name = "Unknown"; label it
+                      as the compose stack it is. */}
+                  {config.projectType === "services" ? "Docker Compose" : stackDef?.name || "Docker"}
                 </p>
               </div>
             </div>

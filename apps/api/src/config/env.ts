@@ -70,6 +70,20 @@ const envSchema = z.object({
   OPENSHIP_PUBLIC_URL: z.string().optional(),
 
   /**
+   * The origin THIS API is actually reachable at — used ONLY to construct
+   * absolute auth/OAuth URLs (discovery issuer, authorize, token) so external
+   * MCP clients get a reachable origin instead of the static `runtimeTarget.api`
+   * fallback. The desktop app runs the API on a dynamic loopback port and passes
+   * `http://127.0.0.1:<apiPort>` here.
+   *
+   * SECURITY: this is a URL-CONSTRUCTION signal only. Unlike OPENSHIP_PUBLIC_URL
+   * it must NEVER feed the zero-auth / auth-mode / cookie / trustedOrigins-security
+   * gates — that's the whole point (it lets desktop advertise a reachable origin
+   * WITHOUT tripping `zeroAuthAllowed`'s "publicly-served" rejection).
+   */
+  OPENSHIP_ADVERTISED_ORIGIN: z.string().optional(),
+
+  /**
    * Force login (no zero-auth) even in desktop DEPLOY_MODE. The CLI sets this
    * for every `openship up` — a CLI-managed instance always requires a real
    * admin account (created by the CLI's setup), unlike the Electron desktop app
@@ -91,6 +105,24 @@ const envSchema = z.object({
 
   /* ---------- Mode ---------- */
   CLOUD_MODE: envBool("false"),
+  /**
+   * MASTER switch for the whole Openship Cloud billing feature (subscriptions,
+   * top-ups, Stripe portal). OFF by default → the billing state reports
+   * `billing.status = "coming_soon"` and every Stripe-mutating endpoint fails
+   * closed with a `BILLING_NOT_ENABLED` 403. Flip to `true` on the SaaS to make
+   * billing live — no dashboard release, no self-hosted change (self-hosted +
+   * local proxy their billing to the cloud, so the cloud alone owns this flag).
+   * Reads (state, usage, plans) stay open regardless so the UI can render the
+   * "coming soon" surface and live usage/capacity.
+   */
+  BILLING_ENABLED: envBool("false"),
+  /**
+   * Sub-switch for one-time credit top-ups WITHIN billing. Top-ups are
+   * available only when BILLING_ENABLED is also on. OFF by default → the state
+   * reports `topups.status = "coming_soon"` and `POST /topup` fails closed with
+   * `BILLING_TOPUPS_NOT_ENABLED`. Lets subscriptions launch before top-ups.
+   */
+  BILLING_TOPUPS_ENABLED: envBool("false"),
   /**
    * Openship Cloud only: hard cap on projects per user (a cloud org maps 1:1
    * to its owning SaaS user, so per-org == per-user here). Enforced at project
@@ -194,6 +226,14 @@ const envSchema = z.object({
    * dev) regardless of this flag.
    */
   TRUST_PROXY: envBool("false"),
+  /**
+   * Allow outbound notification webhooks to target internal/loopback/LAN hosts.
+   * Default false → the SSRF guard (assertPublicUrl) runs on self-hosted too, so
+   * a member can't point a channel at 127.0.0.1 / metadata / the private network.
+   * Single-tenant self-hosts that intentionally notify a LAN endpoint can opt in.
+   * Ignored under CLOUD_MODE (multi-tenant always guards).
+   */
+  NOTIFY_WEBHOOK_ALLOW_INTERNAL: envBool("false"),
   /** Public IP of the server - used for A record instructions in self-hosted mode. */
   SERVER_IP: z.string().optional(),
   /**
@@ -436,6 +476,26 @@ if (env.OPENSHIP_PUBLIC_URL) {
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new Error(
       `OPENSHIP_PUBLIC_URL must use http or https (got "${parsed.protocol}" in "${raw}").`,
+    );
+  }
+}
+
+// ─── OPENSHIP_ADVERTISED_ORIGIN validation ────────────────────────────────
+// URL-construction only (see the field doc). Same fail-loud shape as
+// OPENSHIP_PUBLIC_URL so a malformed origin can't produce junk discovery URLs.
+if (env.OPENSHIP_ADVERTISED_ORIGIN) {
+  const raw = env.OPENSHIP_ADVERTISED_ORIGIN.trim();
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error(
+      `OPENSHIP_ADVERTISED_ORIGIN="${raw}" is not a valid absolute URL (expected e.g. http://127.0.0.1:54777).`,
+    );
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error(
+      `OPENSHIP_ADVERTISED_ORIGIN must use http or https (got "${parsed.protocol}" in "${raw}").`,
     );
   }
 }

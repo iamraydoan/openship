@@ -126,6 +126,24 @@ services:
     expect(parsed.services[0]?.command).toBe("echo $BETTER_AUTH_SECRET");
     expect(parsed.services[0]?.environment.LITERAL).toBe("$BETTER_AUTH_SECRET");
   });
+
+  it("does not re-interpolate a '$' inside a resolved value embedded in a larger string", () => {
+    const parsed = parseComposeFile(
+      `
+services:
+  app:
+    environment:
+      DIRECT: \${DB_PASS}
+      EMBEDDED: postgres://user:\${DB_PASS}@db:5432/app
+`,
+      { envFileContent: `DB_PASS='p$ss'\n` },
+    );
+
+    expect(parsed.services[0]?.environment).toEqual({
+      DIRECT: "p$ss",
+      EMBEDDED: "postgres://user:p$ss@db:5432/app",
+    });
+  });
 });
 
 // ─── parseComposeEnvFile - direct .env content scenarios ─────────────────────
@@ -169,6 +187,14 @@ BAZ=qux
     expect(parseComposeEnvFile(`MSG='line1\\nline2'`)).toEqual({ MSG: "line1\\nline2" });
   });
 
+  it("treats an escaped backslash as a literal `\\` before the next char", () => {
+    expect(parseComposeEnvFile(String.raw`WINPATH="C:\\nginx\\conf"`)).toEqual({
+      WINPATH: "C:\\nginx\\conf",
+    });
+    expect(parseComposeEnvFile(String.raw`X="a\\nb"`)).toEqual({ X: "a\\nb" });
+    expect(parseComposeEnvFile(String.raw`Y="a\nb"`)).toEqual({ Y: "a\nb" });
+  });
+
   it("accepts 'export' prefix (POSIX shell convention)", () => {
     expect(parseComposeEnvFile(`export FOO=bar\nexport BAZ="qux qux"`)).toEqual({
       FOO: "bar",
@@ -208,6 +234,25 @@ BAZ=qux
       BASE: "foo",
       FULL: "foo-bar",
     });
+  });
+
+  it("does NOT interpolate inside single-quoted values (literal)", () => {
+    expect(parseComposeEnvFile(`BASE=foo\nA='$BASE-bar'\nB='\${BASE}-bar'`)).toEqual({
+      BASE: "foo",
+      A: "$BASE-bar",
+      B: "${BASE}-bar",
+    });
+  });
+
+  it("does not re-interpolate a literal '$' carried in by an interpolated entry", () => {
+    expect(parseComposeEnvFile(`PW='a$bc'\nURL=x\${PW}y`)).toEqual({
+      PW: "a$bc",
+      URL: "xa$bcy",
+    });
+  });
+
+  it("keeps '$$' literal inside single-quoted values (no un-escaping)", () => {
+    expect(parseComposeEnvFile(`PWD='p@$$w0rd'`)).toEqual({ PWD: "p@$$w0rd" });
   });
 
   it("handles CRLF line endings", () => {
@@ -413,6 +458,29 @@ services:
       "/host/config:/etc/nginx/conf.d:ro",
       "cache:/var/cache",
     ]);
+  });
+
+  it("folds long-form `bind.selinux` and `volume.nocopy` into their mode suffix", () => {
+    const parsed = parseComposeFile(`
+services:
+  app:
+    image: nginx
+    volumes:
+      - type: bind
+        source: /host/data
+        target: /data
+        bind:
+          selinux: Z
+      - type: volume
+        source: cache
+        target: /cache
+        volume:
+          nocopy: true
+`);
+    // Dropping these would collapse both to their bare "source:target" — the
+    // MODE_SUFFIX regex downstream (volume-namespace.ts) already recognizes
+    // z/Z/nocopy, same as :ro; the long form just never emitted them.
+    expect(parsed.services[0]?.volumes).toEqual(["/host/data:/data:Z", "cache:/cache:nocopy"]);
   });
 
   it("throws on invalid YAML (callers wrap in try/catch)", () => {

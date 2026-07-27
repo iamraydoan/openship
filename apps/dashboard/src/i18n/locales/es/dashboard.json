@@ -25,6 +25,7 @@
     "projectCountOne": "{count} proyecto",
     "projectCountOther": "{count} proyectos",
     "viewAllProjects": "Ver los {count} proyectos →",
+    "viewAllApps": "Ver las {count} aplicaciones →",
     "greetingName": "{greeting}, {name}",
     "importGit": "Importar Git",
     "importGitDesc": "Desde repositorio",
@@ -59,7 +60,7 @@
     "servers": "Servidores",
     "emails": "Correos",
     "settings": "Configuración",
-    "billing": "Facturación",
+    "billing": "Facturación y uso",
     "sections": {
       "main": "Principal",
       "settings": "Configuración",
@@ -78,6 +79,9 @@
     "preferences": "Preferencias"
   },
   "pages": {
+    "apps": {
+      "moreApps": "+{count} más"
+    },
     "projects": {
       "title": "Proyectos",
       "description": "Despliega y gestiona tus aplicaciones con facilidad",
@@ -130,7 +134,7 @@
       "description": "Configuración de cuenta, equipo y plataforma."
     },
     "billing": {
-      "title": "Facturación",
+      "title": "Facturación y uso",
       "description": "Gestiona tu suscripción, uso y métodos de pago."
     }
   },
@@ -158,7 +162,7 @@
       "description": "Dominios personalizados"
     },
     "billing": {
-      "title": "Facturación",
+      "title": "Facturación y uso",
       "description": "Uso y planes"
     }
   }

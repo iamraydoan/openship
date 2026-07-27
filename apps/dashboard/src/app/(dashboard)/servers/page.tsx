@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { BlurIp } from "@/components/BlurIp";
 import {
   Server,
   Plus,
@@ -44,6 +46,8 @@ interface ServerEntry {
   user: string;
   auth: "key" | "password" | null;
   country: string | null;
+  /** The auto-registered host row ("This Server") — deploys run locally, not SSH. */
+  isLocal: boolean;
   /** Projects currently deployed to this server (active deployment → this host). */
   projectCount: number;
 }
@@ -82,6 +86,7 @@ export default function ServersPage() {
           user: s.sshUser ?? "root",
           auth: (s.sshAuthMethod as "key" | "password" | null) ?? null,
           country: s.country ?? null,
+          isLocal: s.isLocal ?? false,
           projectCount: s.projectCount ?? 0,
         })),
       );
@@ -223,9 +228,9 @@ export default function ServersPage() {
                   const AuthIcon = server.auth === "password" ? Lock : KeyRound;
                   const fwd = forwardCounts[server.id] ?? 0;
                   return (
-                    <button
+                    <Link
                       key={server.id}
-                      onClick={() => router.push(`/servers/${server.id}`)}
+                      href={`/servers/${server.id}`}
                       className="group flex w-full items-center gap-3.5 px-5 py-3 text-start transition-colors hover:bg-muted/40"
                     >
                       {/* Avatar — full country flag when we can geolocate the IP, else glyph.
@@ -248,8 +253,17 @@ export default function ServersPage() {
 
                       {/* Name + host (fixed column — keeps meta aligned, no dead gap) */}
                       <div className="w-44 min-w-0 shrink-0 text-start lg:w-56">
-                        <p className="truncate text-sm font-medium text-foreground">{server.name}</p>
-                        <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">{server.host}</p>
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {server.name}
+                          {server.isLocal && (
+                            <span className="ms-2 rounded bg-info/10 px-1.5 py-0.5 text-[10px] font-medium text-info align-middle">
+                              {t.servers.list.thisServer}
+                            </span>
+                          )}
+                        </p>
+                        <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
+                          {server.isLocal ? t.servers.list.currentHost : <BlurIp>{server.host}</BlurIp>}
+                        </p>
                       </div>
 
                       {/* Meta chips */}
@@ -290,7 +304,7 @@ export default function ServersPage() {
                         </span>
                         <ArrowRight className="size-4 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground rtl:rotate-180" />
                       </div>
-                    </button>
+                    </Link>
                   );
                 })}
               </div>

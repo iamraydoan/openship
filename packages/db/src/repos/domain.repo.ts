@@ -1,7 +1,7 @@
 import { eq, and, lt, inArray } from "drizzle-orm";
 import { generateId } from "@repo/core";
 import type { Database } from "../client";
-import { domain } from "../schema";
+import { domain, project } from "../schema";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -98,6 +98,7 @@ export function createDomainRepo(db: Database) {
       // Prefer isPrimary=true; fall back to first row encountered per project.
       const out = new Map<string, Domain>();
       for (const row of rows) {
+        if (!row.projectId) continue; // webhook-owned domains have no project
         const existing = out.get(row.projectId);
         if (!existing || (row.isPrimary && !existing.isPrimary)) {
           out.set(row.projectId, row);
@@ -248,15 +249,34 @@ export function createDomainRepo(db: Database) {
      * immediate Verify click. Free-managed rows are excluded; they
      * don't go through DNS verification (we own the suffix).
      */
-    async findPendingVerification(beforeDate: Date, limit = 100): Promise<Domain[]> {
-      const rows = await db.query.domain.findMany({
-        where: and(
-          eq(domain.verified, false),
-          eq(domain.status, "pending"),
-          eq(domain.domainType, "custom"),
-          lt(domain.createdAt, beforeDate),
-        ),
-      });
+    async findPendingVerification(
+      beforeDate: Date,
+      limit = 100,
+      organizationId?: string,
+    ): Promise<Domain[]> {
+      const conds = [
+        eq(domain.verified, false),
+        eq(domain.status, "pending"),
+        eq(domain.domainType, "custom"),
+        lt(domain.createdAt, beforeDate),
+      ];
+      // Org scope (HTTP /verify-pending): only this org's pending domains, so a
+      // tenant can neither enumerate nor trigger verification/SSL on another
+      // tenant's domains, and the row cap applies to their OWN backlog. `domain`
+      // has no organizationId column, so filter via its project. Omitted →
+      // instance-wide (the system `domains:verify-pending` cron only).
+      if (organizationId) {
+        conds.push(
+          inArray(
+            domain.projectId,
+            db
+              .select({ id: project.id })
+              .from(project)
+              .where(eq(project.organizationId, organizationId)),
+          ),
+        );
+      }
+      const rows = await db.query.domain.findMany({ where: and(...conds) });
       return rows.slice(0, limit);
     },
 

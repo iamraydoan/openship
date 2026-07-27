@@ -22,6 +22,7 @@ import { useToast } from "@/context/ToastContext";
 import { useI18n } from "@/components/i18n-provider";
 
 import { BuildPreferences } from "./_components/BuildPreferences";
+import { RoutePreferences } from "./_components/RoutePreferences";
 import { DeployDefaults } from "./_components/DeployDefaults";
 import { CloudConnection } from "./_components/CloudConnection";
 import { GitHubConnection } from "./_components/GitHubConnection";
@@ -30,6 +31,7 @@ import { PersonalAccessTokens } from "./_components/PersonalAccessTokens";
 import { McpConnection } from "./_components/McpConnection";
 import { InstanceInfo } from "./_components/InstanceInfo";
 import { LanguageSetting } from "./_components/LanguageSetting";
+import { PreferencesSetting } from "./_components/PreferencesSetting";
 import { UpdatesTab } from "./_components/UpdatesTab";
 import { TeamTab } from "./_components/TeamTab";
 import { NotificationsTab } from "./_components/NotificationsTab";
@@ -103,14 +105,16 @@ function SettingsPageInner() {
               <GitHubConnection />
               {showDeployDefaults && <DeployDefaults />}
               {showBuildPreferences && <BuildPreferences />}
+              {showBuildPreferences && <RoutePreferences />}
               <LanguageSetting />
+              <PreferencesSetting />
             </>
           )}
 
           {activeTab === "tokens" && (
             <>
-              <CloneCredentials />
               <PersonalAccessTokens />
+              <CloneCredentials />
             </>
           )}
 

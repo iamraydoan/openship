@@ -25,6 +25,7 @@
     "projectCountOne": "{count} Projekt",
     "projectCountOther": "{count} Projekte",
     "viewAllProjects": "Alle {count} Projekte anzeigen →",
+    "viewAllApps": "Alle {count} Apps anzeigen →",
     "greetingName": "{greeting}, {name}",
     "importGit": "Git importieren",
     "importGitDesc": "Aus Repository",
@@ -59,7 +60,7 @@
     "servers": "Server",
     "emails": "E-Mails",
     "settings": "Einstellungen",
-    "billing": "Abrechnung",
+    "billing": "Abrechnung & Nutzung",
     "sections": {
       "main": "Allgemein",
       "settings": "Einstellungen",
@@ -78,6 +79,9 @@
     "preferences": "Voreinstellungen"
   },
   "pages": {
+    "apps": {
+      "moreApps": "+{count} weitere"
+    },
     "projects": {
       "title": "Projekte",
       "description": "Stellen Sie Ihre Anwendungen mühelos bereit und verwalten Sie sie",
@@ -130,7 +134,7 @@
       "description": "Konto-, Team- und Plattformeinstellungen."
     },
     "billing": {
-      "title": "Abrechnung",
+      "title": "Abrechnung & Nutzung",
       "description": "Verwalten Sie Ihr Abonnement, Ihre Nutzung und Ihre Zahlungsmethoden."
     }
   },
@@ -158,7 +162,7 @@
       "description": "Benutzerdefinierte Domains"
     },
     "billing": {
-      "title": "Abrechnung",
+      "title": "Abrechnung & Nutzung",
       "description": "Nutzung & Tarife"
     }
   }

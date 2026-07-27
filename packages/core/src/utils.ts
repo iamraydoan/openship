@@ -47,9 +47,9 @@ export function normalizeCustomHostname(raw: string): string {
  * True when `host` (already run through normalizeCustomHostname) is a plausible
  * public DNS hostname. Rejects the shapes a bare hostname must never contain —
  * embedded path / port / scheme leftovers / whitespace, IPv4 literals,
- * localhost, and single-label names. The same shape gate the single-app custom
- * domain flow enforces, so service custom domains can't store a bogus host that
- * later becomes an unservable vhost.
+ * localhost, single-label names, and labels longer than the 63-octet DNS limit.
+ * The same shape gate the single-app custom domain flow enforces, so service
+ * custom domains can't store a bogus host that later becomes an unservable vhost.
  */
 export function isValidCustomHostname(host: string): boolean {
   if (!host || host.length > 253) return false;
@@ -59,7 +59,9 @@ export function isValidCustomHostname(host: string): boolean {
   if (host.startsWith(".") || host.endsWith(".") || host.includes("..")) return false;
   const labels = host.split(".");
   if (labels.length < 2) return false; // must be multi-label (has a dot)
-  return labels.every((label) => /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/i.test(label));
+  return labels.every(
+    (label) => label.length <= 63 && /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/i.test(label),
+  );
 }
 
 /** Generate a prefixed unique ID (e.g. "proj_abc123...") */
@@ -90,4 +92,36 @@ export function formatDuration(seconds: number): string {
 /** Sleep for a given number of milliseconds */
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Race a promise against a timeout, rejecting with `Error(message)` after `ms`.
+ * `ms` of 0/undefined disables the timeout (returns the promise as-is). Clears
+ * the timer on settle so it never leaks. One shared impl — callers pass their
+ * own message so prior error contracts are preserved.
+ */
+export function withTimeout<T>(promise: Promise<T>, ms: number | undefined, message: string): Promise<T> {
+  if (!ms) return promise;
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
+
+/**
+ * A POSIX-style environment variable NAME (letter/underscore, then
+ * alphanumerics/underscores). Single source for the rule that was duplicated
+ * across the connection service, the jobs runner, and the compose parser.
+ */
+export function isValidEnvKey(key: string): boolean {
+  return /^[A-Za-z_][A-Za-z0-9_]*$/.test(key);
 }

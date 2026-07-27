@@ -25,6 +25,7 @@
     "projectCountOne": "{count} مشروع",
     "projectCountOther": "{count} مشاريع",
     "viewAllProjects": "عرض كل المشاريع ({count}) ←",
+    "viewAllApps": "عرض كل التطبيقات ({count}) ←",
     "greetingName": "{greeting}، {name}",
     "importGit": "استيراد Git",
     "importGitDesc": "من مستودع",
@@ -59,7 +60,7 @@
     "servers": "الخوادم",
     "emails": "البريد الإلكتروني",
     "settings": "الإعدادات",
-    "billing": "الفوترة",
+    "billing": "الفوترة والاستخدام",
     "sections": {
       "main": "الرئيسية",
       "settings": "الإعدادات",
@@ -78,6 +79,9 @@
     "preferences": "التفضيلات"
   },
   "pages": {
+    "apps": {
+      "moreApps": "‏+{count} المزيد"
+    },
     "projects": {
       "title": "المشاريع",
       "description": "انشر وأدر تطبيقاتك بسهولة",
@@ -130,7 +134,7 @@
       "description": "إعدادات الحساب والفريق والمنصة."
     },
     "billing": {
-      "title": "الفوترة",
+      "title": "الفوترة والاستخدام",
       "description": "إدارة اشتراكك واستخدامك وطرق الدفع."
     }
   },
@@ -158,7 +162,7 @@
       "description": "النطاقات المخصصة"
     },
     "billing": {
-      "title": "الفوترة",
+      "title": "الفوترة والاستخدام",
       "description": "الاستخدام والخطط"
     }
   }

@@ -208,7 +208,7 @@ jobs:
             asset: Openship-win32-x64.zip
           - os: ubuntu-latest
             label: Linux x64
-            find: "-name *.AppImage"
+            find: "-name *.AppImage -o -name *.deb -o -name *.rpm"
             asset: Openship.AppImage
           # GitHub-hosted native aarch64 runner → stage.ts derives arm64 from
           # process.arch, so the API bun --compile + the AppImage build are arm64.
@@ -265,21 +265,54 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          FILE="$(find apps/desktop/out/make -type f ${{ matrix.find }} | head -n1)"
-          if [[ -z "${FILE}" ]]; then
-            echo "No installer matched '${{ matrix.find }}' under apps/desktop/out/make"
+          mkdir -p dist
+          # Collect AppImage
+          APPIMAGE="$(find apps/desktop/out/make -type f -name '*.AppImage' | head -n1)"
+          if [[ -n "${APPIMAGE}" ]]; then
+            cp "${APPIMAGE}" "dist/${{ matrix.asset }}"
+            cd dist
+            if command -v shasum >/dev/null 2>&1; then
+              shasum -a 256 "${{ matrix.asset }}" > "${{ matrix.asset }}.sha256"
+            else
+              sha256sum "${{ matrix.asset }}" > "${{ matrix.asset }}.sha256"
+            fi
+            cd ..
+          else
+            echo "::warning::No AppImage found"
+          fi
+          # Collect .deb
+          DEB="$(find apps/desktop/out/make -type f -name '*.deb' | head -n1)"
+          if [[ -n "${DEB}" ]]; then
+            cp "${DEB}" "dist/Openship.deb"
+            cd dist
+            if command -v shasum >/dev/null 2>&1; then
+              shasum -a 256 "Openship.deb" > "Openship.deb.sha256"
+            else
+              sha256sum "Openship.deb" > "Openship.deb.sha256"
+            fi
+            cd ..
+          else
+            echo "::warning::No .deb found"
+          fi
+          # Collect .rpm
+          RPM="$(find apps/desktop/out/make -type f -name '*.rpm' | head -n1)"
+          if [[ -n "${RPM}" ]]; then
+            cp "${RPM}" "dist/Openship.rpm"
+            cd dist
+            if command -v shasum >/dev/null 2>&1; then
+              shasum -a 256 "Openship.rpm" > "Openship.rpm.sha256"
+            else
+              sha256sum "Openship.rpm" > "Openship.rpm.sha256"
+            fi
+            cd ..
+          else
+            echo "::warning::No .rpm found"
+          fi
+          # Fail if nothing was collected
+          if [[ -z "$(find dist -type f)" ]]; then
+            echo "No installers matched under apps/desktop/out/make"
             find apps/desktop/out/make -type f || true
             exit 1
-          fi
-          mkdir -p dist
-          cp "${FILE}" "dist/${{ matrix.asset }}"
-          # shasum exists on macOS/Linux but not the Windows Git-bash runner;
-          # sha256sum exists on Windows/Linux but not macOS. Use whichever is present.
-          cd dist
-          if command -v shasum >/dev/null 2>&1; then
-            shasum -a 256 "${{ matrix.asset }}" > "${{ matrix.asset }}.sha256"
-          else
-            sha256sum "${{ matrix.asset }}" > "${{ matrix.asset }}.sha256"
           fi
 
       - name: Upload artifact
@@ -552,7 +585,7 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           # Upload whichever desktop installers built (fail-fast:false means a
           # single-OS failure shouldn't block the release).
-          for asset in Openship-arm64.dmg Openship-x64.dmg Openship-win32-x64.zip Openship.AppImage Openship-arm64.AppImage; do
+          for asset in Openship-arm64.dmg Openship-x64.dmg Openship-win32-x64.zip Openship.AppImage Openship-arm64.AppImage Openship.deb Openship.rpm; do
             if [[ -f "dist/${asset}" ]]; then
               gh release upload "${TAG}" "dist/${asset}" "dist/${asset}.sha256" --clobber
             else
